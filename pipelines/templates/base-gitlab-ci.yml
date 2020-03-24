@@ -1,6 +1,6 @@
 variables:
   DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
-  DOCKER_GIT: alpine/git
+  DOCKER_GIT: samueldebruyn/debian-git
 
 
 stages:
