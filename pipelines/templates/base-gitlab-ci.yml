@@ -1,0 +1,64 @@
+variables:
+  DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
+  DOCKER_GIT: alpine/git
+
+
+stages:
+  - Validate
+  - BuildNumber
+  - Build
+  - TagBuildNumber
+
+# Templates
+#######################################################################################
+
+.build_template:
+  stage: Build
+
+## Merge jobs
+#######################################################################################
+
+.lint_mr_template:
+  stage: Validate
+  only:
+    - merge_requests
+
+.test_mr_template:
+  stage: Validate
+  only:
+    - merge_requests
+
+# Jobs
+#######################################################################################
+
+BuildNumber:
+  stage: BuildNumber
+  image: $DOCKER_GIT
+  environment:
+    name: development
+  only:
+    - master
+    - merge_requests
+  script:
+    - git rev-list --count origin/master > .build_number
+    - echo "Build number:"$(cat .build_number)
+  artifacts:
+    paths:
+      - .build_number
+
+TagBuildNumber:
+  stage: TagBuildNumber
+  image: $DOCKER_GIT
+  environment:
+    name: development
+  only:
+    - master
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+
+    - git tag builds/$BUILD_NUMBER
+    - git remote set-url origin https://gitlab-ci-token:$GL_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/
+    - git push origin builds/$BUILD_NUMBER
+
+
