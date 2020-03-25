@@ -41,6 +41,11 @@ stages:
 ## Merge templates
 #######################################################################################
 
+.build_mr_template:
+  extends: .build_template
+  only:
+    - merge_requests
+
 .lint_mr_template:
   stage: Validate
   only:
