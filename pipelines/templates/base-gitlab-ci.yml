@@ -1,24 +1,31 @@
 variables:
   DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
   DOCKER_GIT: samueldebruyn/debian-git
-  PREFIX_TAG_BUILDS: builds
+  PREFIX_TAG_BUILDS: build
+  PREFIX_TAG_RELEASE: release
 
 stages:
   - Validate
   - BuildNumber
   - Build
-  - TagBuildNumber
   - Docker
+  - Deploy
+  - TagBuildNumber
+  - TagVersion
   
 # Templates
 #######################################################################################
 
 .build_template:
   stage: Build
+  except:
+    - branches
 
 .build_number_template:
   stage: BuildNumber
   image: $DOCKER_GIT
+  except:
+    - branches
   artifacts:
     paths:
       - .build_number
@@ -26,6 +33,8 @@ stages:
 .docker_template:
   stage: Docker
   image: docker:stable
+  except:
+    - branches
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: "/certs"
@@ -38,21 +47,32 @@ stages:
     - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH:$BUILD_NUMBER .
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH:$BUILD_NUMBER  
 
+.deploy_template:
+  stage: Deploy
+  except:
+    - branches
+
 ## Merge templates
 #######################################################################################
 
 .build_mr_template:
   extends: .build_template
+  except:
+    - branches
   only:
     - merge_requests
 
 .lint_mr_template:
   stage: Validate
+  except:
+    - branches
   only:
     - merge_requests
 
 .test_mr_template:
   stage: Validate
+  except:
+    - branches
   only:
     - merge_requests
 
@@ -69,17 +89,25 @@ BuildNumber:
   script:
     - git rev-list --count HEAD > .build_number
     - 'echo Calculated build number: $(cat .build_number)'
-  artifacts:
-    paths:
-      - .build_number
 
 TagBuildNumber:
   stage: TagBuildNumber
   image: $DOCKER_GIT
   only:
-    - master
+    - merge_requests
   script:
     - BUILD_NUMBER=$(cat .build_number)
     - 'echo Using build number: $BUILD_NUMBER'
     - git tag $PREFIX_TAG_BUILDS/$BUILD_NUMBER
     - git push --repo https://gitlab-ci-token:$CI_JOB_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/ $PREFIX_TAG_BUILDS/$BUILD_NUMBER
+
+TagVersion:
+  stage: TagVersion
+  image: $DOCKER_SEMREL
+  variables:
+    GSG_TAG_PREFIX: $PREFIX_TAG_RELEASE
+  when: manual
+  only:
+    - merge_requests
+  script: 
+    - release next-version
