@@ -123,11 +123,13 @@ BuildNumberFromBuildTAG:
   
 BuildDockerForBuildTag:
   extends: .docker_template
-  variables:
-    REGISTRY_PATH: $PREFIX_TAG_BUILDS
+  environment:
+    name: development
   only:
     - /build/
-
+  variables:
+    REGISTRY_PATH: build
+  
 
 ## Release jobs
 #######################################################################################
@@ -146,6 +148,6 @@ BuildNumberFromReleaseTAG:
 BuildDockerForBuildTag:
   extends: .docker_template
   variables:
-    REGISTRY_PATH: $PREFIX_TAG_RELEASE
+    REGISTRY_PATH: release
   only:
     - /release/
