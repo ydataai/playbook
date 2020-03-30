@@ -1,6 +1,7 @@
 variables:
   DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
   DOCKER_GIT: samueldebruyn/debian-git
+  DOCKER_SIMPLE: alpine:3.11
   PREFIX_TAG_BUILDS: build
   PREFIX_TAG_RELEASE: release
 
@@ -23,7 +24,6 @@ stages:
 
 .build_number_template:
   stage: BuildNumber
-  image: $DOCKER_GIT
   except:
     - branches
   artifacts:
@@ -54,13 +54,6 @@ stages:
 
 ## Merge templates
 #######################################################################################
-
-.build_mr_template:
-  extends: .build_template
-  except:
-    - branches
-  only:
-    - merge_requests
 
 .lint_mr_template:
   stage: Validate
@@ -94,7 +87,7 @@ TagBuildNumber:
   stage: TagBuildNumber
   image: $DOCKER_GIT
   only:
-    - merge_requests
+    - master
   script:
     - BUILD_NUMBER=$(cat .build_number)
     - 'echo Using build number: $BUILD_NUMBER'
@@ -108,6 +101,52 @@ TagVersion:
     GSG_TAG_PREFIX: $PREFIX_TAG_RELEASE
   when: manual
   only:
-    - merge_requests
+    - master
   script: 
+    - echo $GSG_TAG_PREFIX
     - release next-version
+    - release tag
+
+
+## Build jobs
+#######################################################################################
+
+BuildNumberFromBuildTAG:
+  extends: .build_number_template
+  image: $DOCKER_SIMPLE
+  environment:
+    name: development
+  only:
+    - /build/
+  script:
+    - echo $CI_COMMIT_TAG | sed -n -E 's/build\/([0-9]+)/\1/p' > .build_number
+    - echo "Build number "$(cat .build_number)
+  
+BuildDockerForBuildTag:
+  extends: .docker_template
+  variables:
+    REGISTRY_PATH: $PREFIX_TAG_BUILDS
+  only:
+    - /build/
+
+
+## Release jobs
+#######################################################################################
+
+BuildNumberFromReleaseTAG:
+  extends: .build_number_template
+  image: $DOCKER_SIMPLE
+  environment:
+    name: production
+  only:
+    - /release/
+  script:
+    - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+)/\1/p' > .build_number
+    - echo "Build number "$(cat .build_number)
+
+BuildDockerForBuildTag:
+  extends: .docker_template
+  variables:
+    REGISTRY_PATH: $PREFIX_TAG_RELEASE
+  only:
+    - /release/
