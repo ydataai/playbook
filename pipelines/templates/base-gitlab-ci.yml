@@ -24,8 +24,6 @@ stages:
 
 .build_number_template:
   stage: BuildNumber
-  except:
-    - branches
   artifacts:
     paths:
       - .build_number
