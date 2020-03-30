@@ -75,8 +75,9 @@ stages:
 ## Master jobs
 #######################################################################################
 
-BuildNumber:
+CalculateBuildNumber:
   extends: .build_number_template
+  image: $DOCKER_GIT
   only:
     - master
   script:
