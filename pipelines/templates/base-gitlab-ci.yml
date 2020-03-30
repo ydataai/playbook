@@ -123,12 +123,10 @@ BuildNumberFromBuildTAG:
   
 BuildDockerForBuildTag:
   extends: .docker_template
-  environment:
-    name: development
+  variables:
+    REGISTRY_PATH: $PREFIX_TAG_BUILDS
   only:
     - /build/
-  variables:
-    REGISTRY_PATH: build
   
 
 ## Release jobs
@@ -145,9 +143,9 @@ BuildNumberFromReleaseTAG:
     - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+)/\1/p' > .build_number
     - echo "Build number "$(cat .build_number)
 
-BuildDockerForBuildTag:
+BuildDockerForReleaseTag:
   extends: .docker_template
   variables:
-    REGISTRY_PATH: release
+    REGISTRY_PATH: $PREFIX_TAG_RELEASE
   only:
     - /release/
