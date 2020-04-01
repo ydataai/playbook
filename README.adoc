@@ -2,6 +2,8 @@
 
 * The Team 👨‍👩‍👧‍👦
 
+=== link:./features/README.adoc[Starting a Feature]
+
 == Pipelines
 
 === Templates
