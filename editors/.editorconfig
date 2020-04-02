@@ -5,7 +5,7 @@ root = true
 charset = utf-8
 end_of_line = lf
 indent_size = 2
-indent_style = tab
+indent_style = space
 insert_final_newline = true
 max_line_length = 120
 trim_trailing_whitespace = true
@@ -16,3 +16,7 @@ trim_trailing_whitespace = false
 
 [*.tf]
 indent_size = 2
+
+[*.py]
+indent_size = 4
+max_line_length = 80
