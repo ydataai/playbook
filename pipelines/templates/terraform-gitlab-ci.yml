@@ -1,0 +1,46 @@
+variables:
+  DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
+  DOCKER_TFENV: marmarama/tfenv
+  GSG_BUMP_PATCH: 'true'
+  GSG_TAG_PREFIX: ''
+  TF_IN_AUTOMATION: 1
+  TF_INPUT: 0
+  TF_CLI_ARGS_init: '-backend-config="token=$TERRAFORM_BACKEND_TOKEN" -input=false'
+
+stages:
+  - Validation
+  - TagVersion
+  - Deploy
+
+# Templates
+#######################################################################################
+
+## Script templates
+#######################################################################################
+
+.job_template: &terraform_install tfenv install
+
+.job_template: &terraform_init terraform init
+
+.job_template: &terraform_plan terraform plan -out tfPlan
+
+## Job templates
+#######################################################################################
+
+.validate_template:
+  stage: Validation
+  image: $DOCKER_TFENV
+  script:
+    - *terraform_install
+    - *terraform_init
+    - terraform validate
+    - *terraform_plan
+
+.version_template:
+  stage: TagVersion
+  image:
+
+.deploy_template:
+  stage: Deploy
+  only:
+    - tag
