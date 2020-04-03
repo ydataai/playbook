@@ -51,7 +51,7 @@ stages:
     - *terraform_install
     - *terraform_init
     - *terraform_plan
-    - *terraform
+    - *terraform_apply
 
 # Jobs
 #######################################################################################
