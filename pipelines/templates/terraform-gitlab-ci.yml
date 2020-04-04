@@ -40,6 +40,9 @@ stages:
 .validate_template:
   stage: Validation
   image: $DOCKER_TFENV
+  only:
+    - merge_requests
+    - master
   script:
     - *terraform_init
     - terraform validate
@@ -70,8 +73,3 @@ Version:
   script:
     - release next-version
     - release tag
-
-Deploy:
-  extends: .deploy_template
-  script:
-    - *terraform_apply
