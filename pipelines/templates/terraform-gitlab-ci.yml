@@ -5,9 +5,11 @@ variables:
   GSG_TAG_PREFIX: ''
   TF_IN_AUTOMATION: 1
   TF_INPUT: 0
-  TF_CLI_ARGS_init: '-backend-config="token=$TERRAFORM_BACKEND_TOKEN" -input=false'
-  TF_CLI_ARGS_plan: '-input=false -out tfPlan'
-  TF_CLI_ARGS_apply: '-input=false'
+  TF_CLI_ARGS_EXTRA: ''
+  TF_CLI_ARGS_init: -backend-config="token=$TERRAFORM_BACKEND_TOKEN" -input=false
+  TF_CLI_ARGS_plan: -input=false -out plan
+  TF_CLI_ARGS_apply: -input=false
+  TF_SHOULD_PLAN: 1
 
 stages:
   - Validation
@@ -20,13 +22,17 @@ stages:
 ## Script templates
 #######################################################################################
 
+.job_template: &check_var_file if [ ! -z $TF_CLI_VAR_FILE ]; then
+  TF_CLI_ARGS_EXTRA="$TF_CLI_ARGS_EXTRA -var-file=`eval echo "$"$TF_CLI_VAR_FILE`" ;
+  fi
+
 .job_template: &terraform_install tfenv install
 
-.job_template: &terraform_init terraform init
+.job_template: &terraform_init terraform init $TF_CLI_ARGS_EXTRA
 
-.job_template: &terraform_plan terraform plan
+.job_template: &terraform_plan if [ $TF_SHOULD_PLAN -eq 1 ]; then terraform plan $TF_CLI_ARGS_EXTRA; fi
 
-.job_template: &terraform_apply terraform apply tfPlan
+.job_template: &terraform_apply terraform apply plan $TF_CLI_ARGS_EXTRA
 
 ## Job templates
 #######################################################################################
@@ -34,13 +40,10 @@ stages:
 .validate_template:
   stage: Validation
   image: $DOCKER_TFENV
-  variables:
-    SHOULD_PLAN: 1
   script:
-    - *terraform_install
     - *terraform_init
     - terraform validate
-    - if [ $SHOULD_PLAN -eq 1 ]; then *terraform_plan; fi
+    - *terraform_plan
   
 .deploy_template:
   stage: Deploy
@@ -48,13 +51,16 @@ stages:
   only:
     - tags
   script:
-    - *terraform_install
     - *terraform_init
     - *terraform_plan
     - *terraform_apply
 
 # Jobs
 #######################################################################################
+
+before_script:
+  - tfenv install
+  - *check_var_file
 
 Version:
   stage: TagVersion
@@ -64,3 +70,8 @@ Version:
   script:
     - release next-version
     - release tag
+
+Deploy:
+  extends: .deploy_template
+  script:
+    - *terraform_apply
