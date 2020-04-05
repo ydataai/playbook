@@ -1,0 +1,75 @@
+variables:
+  DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
+  DOCKER_TFENV: marmarama/tfenv
+  GSG_BUMP_PATCH: 1
+  GSG_TAG_PREFIX: ''
+  TF_IN_AUTOMATION: 1
+  TF_INPUT: 0
+  TF_CLI_ARGS_EXTRA: ''
+  TF_CLI_ARGS_init: -backend-config="token=$TERRAFORM_BACKEND_TOKEN" -input=false
+  TF_CLI_ARGS_plan: -input=false -out plan
+  TF_CLI_ARGS_apply: -input=false
+  TF_SHOULD_PLAN: 1
+
+stages:
+  - Validation
+  - TagVersion
+  - Deploy
+
+# Templates
+#######################################################################################
+
+## Script templates
+#######################################################################################
+
+.job_template: &check_var_file if [ ! -z $TF_CLI_VAR_FILE ]; then
+  TF_CLI_ARGS_EXTRA="$TF_CLI_ARGS_EXTRA -var-file=`eval echo "$"$TF_CLI_VAR_FILE`" ;
+  fi
+
+.job_template: &terraform_install tfenv install
+
+.job_template: &terraform_init terraform init $TF_CLI_ARGS_EXTRA
+
+.job_template: &terraform_plan if [ $TF_SHOULD_PLAN -eq 1 ]; then terraform plan $TF_CLI_ARGS_EXTRA; fi
+
+.job_template: &terraform_apply terraform apply plan $TF_CLI_ARGS_EXTRA
+
+## Job templates
+#######################################################################################
+
+.validate_template:
+  stage: Validation
+  image: $DOCKER_TFENV
+  only:
+    - merge_requests
+    - master
+  script:
+    - *terraform_install
+    - *check_var_file
+    - *terraform_init
+    - terraform validate
+    - *terraform_plan
+  
+.deploy_template:
+  stage: Deploy
+  image: $DOCKER_TFENV
+  only:
+    - tags
+  script:
+    - *terraform_install
+    - *check_var_file
+    - *terraform_init
+    - *terraform_plan
+    - *terraform_apply
+
+# Jobs
+#######################################################################################
+
+Version:
+  stage: TagVersion
+  image: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
+  only:
+    - master
+  script:
+    - release next-version
+    - release tag
