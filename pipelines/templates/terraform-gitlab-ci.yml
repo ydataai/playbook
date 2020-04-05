@@ -1,7 +1,6 @@
 variables:
   DOCKER_SEMREL: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
   DOCKER_TFENV: marmarama/tfenv
-  GSG_BUMP_PATCH: 1
   GSG_TAG_PREFIX: ''
   TF_IN_AUTOMATION: 1
   TF_INPUT: 0
@@ -67,9 +66,8 @@ stages:
 
 Version:
   stage: TagVersion
-  image: registry.gitlab.com/juhani/go-semrel-gitlab:v0.21.1
+  image: $DOCKER_SEMREL
   only:
     - master
   script:
-    - release next-version
-    - release tag
+    - (release next-version 2>/dev/null && release tag) || exit 0
