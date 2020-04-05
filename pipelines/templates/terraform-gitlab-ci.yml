@@ -32,7 +32,7 @@ stages:
 
 .job_template: &terraform_plan if [ $TF_SHOULD_PLAN -eq 1 ]; then terraform plan $TF_CLI_ARGS_EXTRA; fi
 
-.job_template: &terraform_apply terraform apply plan $TF_CLI_ARGS_EXTRA
+.job_template: &terraform_apply terraform apply plan
 
 ## Job templates
 #######################################################################################
