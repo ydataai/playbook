@@ -71,5 +71,4 @@ Version:
   only:
     - master
   script:
-    - release next-version
-    - release tag
+    - (release next-version 2>/dev/null && release tag) || exit 0
