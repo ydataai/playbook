@@ -44,6 +44,8 @@ stages:
     - merge_requests
     - master
   script:
+    - *terraform_install
+    - *check_var_file
     - *terraform_init
     - terraform validate
     - *terraform_plan
@@ -54,16 +56,14 @@ stages:
   only:
     - tags
   script:
+    - *terraform_install
+    - *check_var_file
     - *terraform_init
     - *terraform_plan
     - *terraform_apply
 
 # Jobs
 #######################################################################################
-
-before_script:
-  - tfenv install
-  - *check_var_file
 
 Version:
   stage: TagVersion
