@@ -22,7 +22,7 @@ stages:
 #######################################################################################
 
 .job_template: &check_var_file if [ ! -z $TF_CLI_VAR_FILE ]; then
-  TF_CLI_ARGS_EXTRA="$TF_CLI_ARGS_EXTRA -var-file=`eval echo "$"$TF_CLI_VAR_FILE`" ;
+  TF_CLI_ARGS_EXTRA="-var-file=`eval echo "$"$TF_CLI_VAR_FILE` $TF_CLI_ARGS_EXTRA";
   fi
 
 .job_template: &terraform_install tfenv install
