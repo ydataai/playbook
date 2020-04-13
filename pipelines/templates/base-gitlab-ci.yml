@@ -60,8 +60,18 @@ CalculateBuildNumber:
   only:
     - master
   script:
-    - git rev-list --count HEAD > .build_number
+    - git rev-parse --short HEAD > .build_number
     - 'echo Calculated build number: $(cat .build_number)'
+
+CalculateNextVersion:
+  extends: .build_number_template
+  image: $DOCKER_SEMREL
+  variables:
+    GSG_TAG_PREFIX: ''
+  only:
+    - master
+  script:
+    - release next-version --allow-current > .version
 
 TagBuildNumber:
   stage: TagBuildNumber
@@ -87,7 +97,6 @@ TagVersion:
     - release next-version
     - release tag
 
-
 ## Build jobs
 #######################################################################################
 
@@ -111,5 +120,3 @@ BuildNumberFromReleaseTAG:
   script:
     - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+)/\1/p' > .build_number
     - echo "Build number "$(cat .build_number)
-
-
