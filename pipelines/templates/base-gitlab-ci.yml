@@ -17,6 +17,20 @@ stages:
 # Templates
 #######################################################################################
 
+.lint_mr_template:
+  stage: Validate
+  except:
+    - branches
+  only:
+    - merge_requests
+
+.test_mr_template:
+  stage: Validate
+  except:
+    - branches
+  only:
+    - merge_requests
+
 .build_template:
   stage: Build
   except:
@@ -33,22 +47,6 @@ stages:
   except:
     - branches
 
-## Merge templates
-#######################################################################################
-
-.lint_mr_template:
-  stage: Validate
-  except:
-    - branches
-  only:
-    - merge_requests
-
-.test_mr_template:
-  stage: Validate
-  except:
-    - branches
-  only:
-    - merge_requests
 
 # Jobs
 #######################################################################################
@@ -102,14 +100,6 @@ BuildNumberFromBuildTAG:
     - echo $CI_COMMIT_TAG | sed -n -E 's/build\/([0-9]+)/\1/p' > .build_number
     - echo "Build number "$(cat .build_number)
 
-BuildDockerForBuildTag:
-  extends: .docker_template
-  variables:
-    REGISTRY_PATH: $PREFIX_TAG_BUILDS
-  only:
-    - /build/
-
-
 ## Release jobs
 #######################################################################################
 
@@ -122,9 +112,4 @@ BuildNumberFromReleaseTAG:
     - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+)/\1/p' > .build_number
     - echo "Build number "$(cat .build_number)
 
-BuildDockerForReleaseTag:
-  extends: .docker_template
-  variables:
-    REGISTRY_PATH: $PREFIX_TAG_RELEASE
-  only:
-    - /release/
+
