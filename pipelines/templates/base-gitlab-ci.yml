@@ -61,7 +61,7 @@ CalculateBuildNumber:
   only:
     - master
   script:
-    - git rev-parse --short HEAD > .build_number
+    - git rev-list --count HEAD > .build_number
     - 'echo Calculated build number: $(cat .build_number)'
 
 CalculateNextVersion:
@@ -83,7 +83,7 @@ TagBuildNumber:
     - export
     - BUILD_NUMBER=$(cat .build_number)
     - VERSION=$(cat .version)
-    - TAG=${VERSION}.${BUILD_NUMBER}
+    - TAG=${VERSION}.dev${BUILD_NUMBER}
     - 'echo Using build number: $TAG'
     - git tag $PREFIX_TAG_BUILDS/$TAG
     - git push https://gitlab-ci-token:$CI_PUSH_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/ $PREFIX_TAG_BUILDS/$TAG
@@ -110,14 +110,14 @@ ExtractVersionAndBuildFromBuildTAG:
   only:
     - /build/
   script:
-    - echo $CI_COMMIT_TAG | sed -n -E 's/build\/([0-9]+.[0-9]+.[0-9]+).([[:alnum:]]{7})/\2/p' > .build_number
+    - echo $CI_COMMIT_TAG | sed -n -E 's/build\/[0-9]+.[0-9]+.[0-9]+.dev([0-9]+)/\1/p' > .build_number
     - echo $CI_COMMIT_TAG | sed -n -E 's/build\/([0-9]+.[0-9]+.[0-9]+).*/\1/p' > .version
     - 'echo Version: $(cat .version) - Build: $(cat .build_number)'
 
 ## Release jobs
 #######################################################################################
 
-BuildNumberFromReleaseTAG:
+VersionFromReleaseTAG:
   extends: .build_number_template
   image: $DOCKER_SIMPLE
   only:
