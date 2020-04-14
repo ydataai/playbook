@@ -80,12 +80,13 @@ TagBuildNumber:
   only:
     - master
   script:
-    - 'echo version from file: $(cat .version)'
-    - 'echo release version: `release next-version --allow-current`'
+    - export
     - BUILD_NUMBER=$(cat .build_number)
-    - 'echo Using build number: $BUILD_NUMBER'
-    - git tag $PREFIX_TAG_BUILDS/$BUILD_NUMBER
-    - git push https://gitlab-ci-token:$CI_PUSH_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/ $PREFIX_TAG_BUILDS/$BUILD_NUMBER
+    - VERSION=$(cat .version)
+    - TAG=${VERSION}.${BUILD_NUMBER}
+    - 'echo Using build number: $TAG'
+    - git tag $PREFIX_TAG_BUILDS/$TAG
+    - git push https://gitlab-ci-token:$CI_PUSH_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/ $PREFIX_TAG_BUILDS/$TAG
 
 TagVersion:
   stage: TagVersion
