@@ -104,14 +104,15 @@ TagVersion:
 ## Build jobs
 #######################################################################################
 
-BuildNumberFromBuildTAG:
+ExtractVersionAndBuildFromBuildTAG:
   extends: .build_number_template
   image: $DOCKER_SIMPLE
   only:
     - /build/
   script:
-    - echo $CI_COMMIT_TAG | sed -n -E 's/build\/([0-9]+)/\1/p' > .build_number
-    - echo "Build number "$(cat .build_number)
+    - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+).([[:alnum:]]{7})/\2/p' > .build_number
+    - echo $CI_COMMIT_TAG | sed -n -E 's/build\/([0-9]+.[0-9]+.[0-9]+).*/\1/p' > .version
+    - 'echo Version: $(cat .version) - Build: $(cat .version)'
 
 ## Release jobs
 #######################################################################################
@@ -122,5 +123,5 @@ BuildNumberFromReleaseTAG:
   only:
     - /release/
   script:
-    - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+)/\1/p' > .build_number
-    - echo "Build number "$(cat .build_number)
+    - echo $CI_COMMIT_TAG | sed -n -E 's/release\/([0-9]+.[0-9]+.[0-9]+)/\1/p' > .version
+    - 'echo Version $(cat .version)'
