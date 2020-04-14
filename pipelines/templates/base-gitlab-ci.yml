@@ -41,6 +41,7 @@ stages:
   artifacts:
     paths:
       - .build_number
+      - .version
 
 .deploy_template:
   stage: Deploy
@@ -79,6 +80,8 @@ TagBuildNumber:
   only:
     - master
   script:
+    - "echo 'version from file: `cat .version`'"
+    - "echo 'release version: `release next-version --allow-current`'"
     - BUILD_NUMBER=$(cat .build_number)
     - 'echo Using build number: $BUILD_NUMBER'
     - git tag $PREFIX_TAG_BUILDS/$BUILD_NUMBER
