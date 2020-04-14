@@ -80,8 +80,8 @@ TagBuildNumber:
   only:
     - master
   script:
-    - 'version from file: $(cat .version)'
-    - "echo 'release version: `release next-version --allow-current`'"
+    - 'echo version from file: $(cat .version)'
+    - 'echo release version: `release next-version --allow-current`'
     - BUILD_NUMBER=$(cat .build_number)
     - 'echo Using build number: $BUILD_NUMBER'
     - git tag $PREFIX_TAG_BUILDS/$BUILD_NUMBER
