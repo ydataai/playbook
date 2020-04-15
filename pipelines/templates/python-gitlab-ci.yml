@@ -1,0 +1,6 @@
+include:
+  - remote: https://github.com/YData-ai/Playbook/raw/master/pipelines/templates/base-gitlab-ci.yml
+
+# Templates
+#######################################################################################
+
