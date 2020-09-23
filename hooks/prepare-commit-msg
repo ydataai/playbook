@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# List the branch prefixes that apply, bellow
+if [ -z "$BRANCHES_TO_APPLY" ]; then
+	BRANCHES_TO_APPLY=(chore fix feat)
+fi
+
+# Pick the current branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+# Remove the unnecessary parts
+TRIMMED=$(echo $BRANCH_NAME | grep -Eo '^(\w+)' | sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')
+
+# Check if it matches
+APPLY_TO_BRANCH=$(printf "%s\n" "${BRANCHES_TO_APPLY[@]}" | grep -c "^$TRIMMED$")
+
+# If it matches, prepend the part that interests us to the given commit message
+if [ -n "$BRANCH_NAME" ] && [[ $APPLY_TO_BRANCH -eq 1 ]]; then
+	sed -i.bak -e "1s/^/$TRIMMED: /" $1
+fi
