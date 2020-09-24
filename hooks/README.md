@@ -1,6 +1,6 @@
 # Automatically add task type to your commit messages
 
-The following guid will show you how to add the task type to your commit messages, automatically, using git hooks.
+The following guide will show you how to add the task type to your commit messages, automatically, using git hooks.
 
 Git hooks are, basically, just scripts that Git executes before or after events such as: `commit`, `push`, and `receive`.
 
