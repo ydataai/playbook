@@ -13,5 +13,5 @@ TRIMMED=$(echo $BRANCH_NAME | cut -d/ -f1 | tr "[:upper:]" "[:lower:]")
 
 # If it matches, prepend the part that interests us to the given commit message
 if [[ ${BRANCHES_TO_APPLY[*]} == *"$TRIMMED"* ]]; then
-	sed -i.bak -e "1s/^/$TRIMMED: /" $1
+	sed -i.bak -e "/^$TRIMMED/! s/^/$TRIMMED: /" $1
 fi
