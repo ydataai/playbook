@@ -9,7 +9,7 @@ fi
 BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
 # Remove the unnecessary parts
-TRIMMED=$(echo $BRANCH_NAME | grep -Eo '^(\w+)' | sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')
+TRIMMED=$(echo $BRANCH_NAME | cut -d/ -f1 | tr "[:upper:]" "[:lower:]")
 
 # Check if it matches
 APPLY_TO_BRANCH=$(printf "%s\n" "${BRANCHES_TO_APPLY[@]}" | grep -c "^$TRIMMED$")
