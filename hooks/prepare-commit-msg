@@ -11,10 +11,7 @@ BRANCH_NAME=$(git symbolic-ref --short HEAD)
 # Remove the unnecessary parts
 TRIMMED=$(echo $BRANCH_NAME | cut -d/ -f1 | tr "[:upper:]" "[:lower:]")
 
-# Check if it matches
-APPLY_TO_BRANCH=$(printf "%s\n" "${BRANCHES_TO_APPLY[@]}" | grep -c "^$TRIMMED$")
-
 # If it matches, prepend the part that interests us to the given commit message
-if [ -n "$BRANCH_NAME" ] && [[ $APPLY_TO_BRANCH -eq 1 ]]; then
+if [[ ${BRANCHES_TO_APPLY[*]} == *"$TRIMMED"* ]]; then
 	sed -i.bak -e "1s/^/$TRIMMED: /" $1
 fi
