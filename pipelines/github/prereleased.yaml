@@ -1,0 +1,133 @@
+name: Prereleased
+
+on:
+  release:
+    types: [ prereleased ]
+
+env:
+  COMPONENT: ...
+
+  API_CONTAINER: api_container_image
+  MANAGER_CONTAINER: manager_container_image
+
+  DOCKER_CONTAINER_REGISTRY: ${{ secrets.PRIVATE_CONTAINER_REGISTRY }}
+  API_DOCKER_IMAGE_URL: ${{ secrets.PRIVATE_CONTAINER_REGISTRY }}/${{ github.repository_owner }}/.../api
+  MANAGER_DOCKER_IMAGE_URL: ${{ secrets.PRIVATE_CONTAINER_REGISTRY }}/${{ github.repository_owner }}/.../manager
+
+jobs:
+  cancel_previous:
+    name: 'Cancel Previous Runs'
+    runs-on: ubuntu-20.04
+    timeout-minutes: 3
+    steps:
+    - uses: ydataai/cancel-workflow-action@0.7.0
+      with:
+        ignore_sha: true
+        access_token: ${{ secrets.ACCESS_TOKEN }}
+
+
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-20.04
+
+    needs:
+    - cancel_previous
+
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+
+    steps:
+    - name: Version
+      id: version
+      run: echo ::set-output name=value::`echo ${{ github.ref }} | sed -n -E 's/refs\/tags\/build\/([0-9]+.[0-9]+.[0-9]+)\/([[:alnum:]])/\1.\2/p'`
+
+
+  build-api:
+    name: Build API
+    runs-on: ubuntu-20.04
+
+    needs: prepare
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: docker/login-action@v1
+      with:
+        registry: ${{ env.DOCKER_CONTAINER_REGISTRY }}
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    - uses: docker/setup-buildx-action@v1
+
+    - uses: docker/build-push-action@v2
+      id: docker_build
+      with:
+        file: api.Dockerfile
+        push: true
+        tags: ${{ env.API_DOCKER_IMAGE_URL }}:${{ needs.prepare.outputs.version }}
+        secrets: |
+          GIT_AUTH_TOKEN=${{ secrets.GHCR_TOKEN }}
+
+
+  build-manager:
+    name: Build Manager
+    runs-on: ubuntu-20.04
+
+    needs: prepare
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: docker/login-action@v1
+      with:
+        registry: ${{ env.DOCKER_CONTAINER_REGISTRY }}
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    - uses: docker/setup-buildx-action@v1
+
+    - uses: docker/build-push-action@v2
+      id: docker_build
+      with:
+        file: manager.Dockerfile
+        push: true
+        tags: ${{ env.MANAGER_DOCKER_IMAGE_URL }}:${{ needs.prepare.outputs.version }}
+        secrets: |
+          GIT_AUTH_TOKEN=${{ secrets.GHCR_TOKEN }}
+
+  update-manifests:
+    name: Update Manifests
+    runs-on: ubuntu-20.04
+
+    needs:
+    - prepare
+    - build-api
+    - build-manager
+
+    steps:
+    - name: Checkout Manifests repo
+      uses: actions/checkout@v2
+      with:
+        repository: ydataai/manifests
+        token: ${{ secrets.ACCESS_TOKEN }}
+
+    - uses: imranismail/setup-kustomize@v1
+      with:
+        kustomize-version: "3.8.5"
+
+    - name: Update kustomization image tag
+      env:
+        VERSION: ${{ needs.prepare.outputs.version }}
+      run: |
+        cd ydata/${COMPONENT}
+        kustomize edit set image ${API_CONTAINER}=${API_DOCKER_IMAGE_URL}:${VERSION}
+        kustomize edit set image ${MANAGER_CONTAINER}=${MANAGER_DOCKER_IMAGE_URL}:${VERSION}
+
+    - name: Commit and push image update into manifests repo
+      env:
+        VERSION: ${{ needs.prepare.outputs.version }}
+      run: |
+        git config user.email "azory@ydata.ai"
+        git config user.name "Azory YData Bot"
+        git commit -a -m "chore(bump): [CI] [DEV] bump ${COMPONENT} to $VERSION"
+        git push origin master
